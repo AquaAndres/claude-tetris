@@ -1,0 +1,100 @@
+name: Claude Issue Triage
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  triage:
+    # Solo issues reales (no PRs, que también emiten eventos `issues`),
+    # solo si el disparador no es un bot (evita que un `edited` hecho por
+    # este mismo workflow, u otro bot, lo re-dispare), y solo si el issue
+    # no menciona @claude (eso ya lo maneja .github/workflows/claude.yml).
+    if: |
+      github.event.issue.pull_request == null &&
+      github.event.sender.type != 'Bot' &&
+      !contains(github.event.issue.body, '@claude') &&
+      !contains(github.event.issue.title, '@claude')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Sync domain labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          yq -o=json '.' .github/labels.yml | jq -c '.[]' | while read -r item; do
+            name=$(echo "$item" | jq -r '.name')
+            color=$(echo "$item" | jq -r '.color')
+            desc=$(echo "$item" | jq -r '.description')
+            gh label create "$name" --color "$color" --description "$desc" --force
+          done
+
+      - name: Run Claude issue triage
+        id: claude-triage
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          additional_permissions: |
+            actions: read
+          claude_args: |
+            --allowed-tools "Read,Grep,Glob,Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh issue comment:*),Bash(gh label list:*),Bash(gh api:*)"
+          prompt: |
+            Eres un triador técnico para el repositorio ${{ github.repository }} (un juego de
+            Tetris en HTML5 Canvas + CSS + JavaScript vanilla, ver CLAUDE.md para la
+            arquitectura). Analiza el issue #${{ github.event.issue.number }} y haz lo
+            siguiente, en este orden:
+
+            1. Lee el issue completo: `gh issue view ${{ github.event.issue.number }} --json title,body,labels,comments`.
+            2. Lista los labels disponibles con `gh label list` y usa **solo** labels que
+               existan ahí — nunca inventes uno nuevo.
+            3. Lee el código relevante (game.js, index.html, style.css, README.md, CLAUDE.md)
+               y localiza las funciones, constantes o líneas concretas implicadas en el
+               problema o petición del issue.
+            4. Aplica labels con `gh issue edit ${{ github.event.issue.number }} --add-label "..."`:
+               exactamente un `type:*`, uno o más `area:*` relevantes, un `priority:*`, y
+               `needs-info` si el issue no trae información suficiente para diagnosticar.
+               Termina siempre añadiendo `triaged`. Si algún label previamente asignado ya
+               no aplica (p. ej. `needs-info` en una segunda pasada donde ya se aclaró la
+               duda), quítalo con `gh issue edit ${{ github.event.issue.number }} --remove-label "..."`.
+            5. Antes de comentar, busca si ya existe un comentario tuyo anterior que
+               contenga el marcador `<!-- claude-triage -->` (usando
+               `gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments`).
+               Si existe, actualízalo con
+               `gh api repos/${{ github.repository }}/issues/comments/<id> -X PATCH -f body=@-`
+               en vez de crear uno nuevo (esto evita duplicar el diagnóstico cuando el issue
+               se edita varias veces).
+            6. El comentario (nuevo o actualizado) debe empezar con la línea
+               `<!-- claude-triage -->` y seguir esta estructura en español:
+
+               ## Diagnóstico automático
+
+               **Resumen**: 1-2 frases de qué pide o reporta el issue.
+
+               **Causa raíz probable**: explica la causa técnica, citando archivo:línea
+               concretos (ej. `game.js:23`).
+
+               **Archivos y funciones a modificar**: lista concreta.
+
+               **Plan de solución propuesto**: pasos numerados y accionables.
+
+               **Criterios de aceptación**: cómo verificar manualmente en el navegador que
+               quedó resuelto.
+
+               **Riesgos / dudas abiertas**: o "Ninguna" si no hay.
+
+               Si el issue no da información suficiente para diagnosticar con confianza, dilo
+               explícitamente en el resumen, pide los datos que faltan, y aplica el label
+               `needs-info` en vez de inventar una causa raíz.
+
+            No modifiques ningún archivo del repositorio ni abras un PR — esta tarea es solo
+            de triaje y diagnóstico. La implementación se pedirá después, por separado,
+            mencionando @claude en el issue.
