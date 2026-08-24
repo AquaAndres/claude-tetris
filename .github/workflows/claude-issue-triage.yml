@@ -98,3 +98,7 @@ jobs:
             No modifiques ningún archivo del repositorio ni abras un PR — esta tarea es solo
             de triaje y diagnóstico. La implementación se pedirá después, por separado,
             mencionando @claude en el issue.
+
+            Todo lo que comentes debe estar en formato Markdown válido, interpretable por
+            GitHub (encabezados con `#`, listas con `-`, código entre backticks/bloques
+            ```, etc.), tal como se muestra en la estructura del paso 6.
