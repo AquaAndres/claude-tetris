@@ -256,3 +256,130 @@ kbd {
 #restart-btn:hover {
   background: var(--restart-hover);
 }
+
+/* ---- Records ---- */
+#start-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: var(--title-color);
+  text-shadow: 0 0 20px var(--title-shadow);
+}
+
+.records-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 220px;
+}
+
+.records-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--label-color);
+  letter-spacing: 0.5px;
+}
+
+.records-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: decimal inside;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.records-table li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.records-empty {
+  justify-content: center !important;
+  color: var(--label-color);
+  font-size: 12px;
+}
+
+.records-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.records-score {
+  color: var(--value-color);
+  font-weight: 700;
+}
+
+.records-highlight {
+  background: rgba(122, 162, 247, 0.2);
+  outline: 1px solid var(--value-color);
+}
+
+.records-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.records-form-label {
+  font-size: 13px;
+  color: var(--fg);
+}
+
+#player-name {
+  width: 160px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--board-border);
+  background: var(--board-bg);
+  color: var(--fg);
+  font-size: 14px;
+  text-align: center;
+}
+
+#save-score-btn {
+  background: var(--restart-bg);
+  color: var(--restart-color);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background 0.15s;
+}
+
+#save-score-btn:hover {
+  background: var(--restart-hover);
+}
+
+.start-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+#reset-records-btn {
+  background: transparent;
+  color: var(--overlay-title-color);
+  border: 1px solid var(--overlay-title-color);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: background 0.15s;
+}
+
+#reset-records-btn:hover {
+  background: rgba(229, 115, 115, 0.15);
+}
